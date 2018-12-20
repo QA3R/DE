@@ -1,0 +1,16 @@
+body {
+	background-color: gray;
+	text-align: center;	
+}
+
+p1 {
+	color: whitesmoke;
+	display: block;
+	text-align: center;
+}
+
+p2 {
+	color: whitesmoke;
+	display: block;
+	text-align: center;
+}
