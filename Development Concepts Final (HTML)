@@ -1,0 +1,251 @@
+<!doctype HTML>
+<head>
+<link rel="stylesheet" href="style.css">
+<title>Monster Smash: The Video Game</title>
+</head>
+
+<body>
+<canvas id = canvas1 width="128" height = "128"> </canvas>
+<canvas id = canvas2 width="128" height = "128"> </canvas>
+<canvas id = canvas3 width="128" height = "128"> </canvas>
+<canvas id = canvas4 width="128" height = "128"> </canvas>
+<p1> Click on the monsters when they're out the furthest for the highest score gain! </p1>
+	<p2 id = status></p2>    
+</body>
+
+<script>
+	
+    var points = 0;
+    var playerTurns = 0;
+    var highScore = 0;
+    var endGame = false;
+    var frame1MonsterPrompt = ["Too early?"];
+    var frame2MonsterPrompt = ["Your still clicking early!"];
+    var frame3MonsterPrompt = ["Wait a bit man!", "WAIT!", "Consider waiting..", "Oof, can't you wait a bit before clicking?"];
+    var frame4MonsterPrompt = ["That's not a lot of damage!!.", "You're not hitting hard enough!", "DO MORE DAMAGE GUY-O!", "ARE YOU EVEN TRYING??"];
+    var frame5MonsterPrompt = ["NOW THAT'S A LOT OF DAMAGE!", "Harder Daddy!", "YUSSSS", "Ohhhh boiiiii!"];
+    var frame6MonsterPrompt = ["MAXIMUM DAMAGE!", "PERFECT!", "RIGHT ON THE SPOT!"];
+    var monsters = [];
+    var monsterCanvas = [];
+    var numOfMonsters = 4;
+    var monsterSurfaces= [];
+    var renderMonsterPNGs = [];
+
+    var monster= {
+		
+          IMGSRC:"/images/SPRITE.png",
+          SIZE:128, //size of each frame
+          COLUMNS: 3,
+         
+          numOfFrames: 5, //number of frames on 0-based index
+          currentFrame:0, //starting frame for monster, 1th frame
+         
+          //inital x & y positions on the tile sheet.
+          sourceX:0, 
+          sourceY:0, 
+          isForward:true,  //the direction of the animation
+        //define the states
+          HIDING: 0,
+          JUMPING: 1,
+          state: this.HIDING,  
+            
+         waitTime: undefined,
+            //find the wait time before the monster pops up
+         calcWaitTime: function()
+            {
+              this.waitTime = Math.ceil(Math.random() * 15) ; //generate a random wait time 
+            },
+            
+         Animation: function()
+            {
+                if(this.waitTime> 0 || this.waitTime==undefined)
+                   this.state=this.HIDING;
+                else this.state = this.JUMPING;
+                
+                    
+                switch(this.state)
+                    {
+                        case this.HIDING:
+                            this.currentFrame=0; 
+                            this.waitTime--;
+                            break;
+                        case this.JUMPING:
+                               if(this.currentFrame==this.numOfFrames) this.isForward=false;
+                            
+                            if(this.currentFrame==0 && !this.isForward)
+                                {
+                              this.isForward=true;
+                              this.calcWaitTime(); 
+                              this.state=this.HIDING;
+                              break;
+                                }
+                              
+                if(this.isForward)
+                    this.currentFrame++;
+                else this.currentFrame--;
+                
+                    }
+                
+                this.sourceX = (this.currentFrame % this.COLUMNS)*this.SIZE;
+                this.sourceY = Math.floor(this.currentFrame / this.COLUMNS)*this.SIZE;
+               
+            }
+        };
+//for loop to create monsters    
+    for (var i = 0; i < numOfMonsters; i++)
+        {
+            var monsterCopy = Object.create(monster);
+            monsters.push(monsterCopy);
+        }
+
+    for (var j = 1; j < 5; j++)
+        {
+            var canvas = document.getElementById("canvas" +j.toString());
+            monsterCanvas.push(canvas);
+        }
+    for (var k = 0; k < 4; k++)
+        {
+            var monsterSurface = monsterCanvas[k].getContext("2d");
+            monsterSurfaces.push(monsterSurface);
+        }
+
+    for ( var l = 0; l<4; l++)
+        {
+           var image = new Image();
+           image.addEventListener("load", loadTime, false);
+           image.src = monsters[l].IMGSRC;
+           renderMonsterPNGs.push(image);
+        }
+    
+    function loadTime() {
+        monster.calcWaitTime(); //get the initial wait time before we start the animation....
+        setInterval(update, 450);         
+    }
+    
+//applying the function for each mosnter when click feature is activated     
+        monsterCanvas[0].addEventListener("click", function(){pointsEarned(monsters[0]);}, false);
+        monsterCanvas[1].addEventListener("click", function(){pointsEarned(monsters[1]);}, false);
+        monsterCanvas[2].addEventListener("click", function(){pointsEarned(monsters[2]);}, false);
+        monsterCanvas[3].addEventListener("click", function(){pointsEarned(monsters[3]);}, false);
+    
+    function update() {
+		
+        for (var i = 0; i<4; i++)
+            {
+                 monsters[i].Animation(); //update the monster's animation frames        
+            }
+        if(!endGame)
+            {                
+                render(); //render the animation
+            }           
+    }
+    
+    function render() {
+		
+        for( var i = 0; i<4; i++)
+        {
+        //clear anything drawn on the canvas previously before drawing again
+       monsterSurfaces[i].clearRect(0,0, canvas.width, canvas.height);
+			
+        monsterSurfaces[i].drawImage(
+        renderMonsterPNGs[i],
+        monsters[i].sourceX, monsters[i].sourceY, monsters[i].SIZE, monsters[i].SIZE,//source image
+        0, 0, monsterCanvas[i].width, monsterCanvas[i].height  //rendering the monster at 0,0 with a x,y dimension of the canvas
+        );
+        }
+    }
+	
+//applying points to each frame of the monster animation    
+    function pointsEarned(monsterID) {
+		
+        playerTurns++;
+        if(playerTurns<10)
+        {
+         
+          if(monsterID.currentFrame == 0)
+            {
+                var toPrint = Math.floor(Math.random()*frame1MonsterPrompt.length);                
+                var pointsToPrint = 0;
+                points += pointsToPrint;
+                document.getElementById("status").innerHTML = (frame1MonsterPrompt[toPrint] + " You got: " +pointsToPrint +" Points...");
+            }
+          else if(monsterID.currentFrame == 1)
+            {
+                var toPrint = Math.floor(Math.random()*frame2MonsterPrompt.length);
+                var pointsToPrint = 100;
+                points += pointsToPrint;
+                document.getElementById("status").innerHTML = (frame2MonsterPrompt[toPrint] + " You got: " +pointsToPrint+" Points..");               
+            }
+          else if(monsterID.currentFrame == 2)
+            {
+                var toPrint = Math.floor(Math.random()*frame3MonsterPrompt.length);
+                var pointsToPrint = 200;
+                points += pointsToPrint;
+                document.getElementById("status").innerHTML = (frame3MonsterPrompt[toPrint]+ " You got: " +pointsToPrint+" Points.");              
+            }
+          else if(monsterID.currentFrame == 3)
+            {
+                var toPrint = Math.floor(Math.random()*frame4MonsterPrompt.length);
+                var pointsToPrint = 300;
+                points += pointsToPrint;
+                document.getElementById("status").innerHTML = (frame4MonsterPrompt[toPrint]+ " You got: " +pointsToPrint+" Points!");               
+            }
+          else if(monsterID.currentFrame == 4)
+            {
+                var toPrint = Math.floor(Math.random()*frame5MonsterPrompt.length);
+                var pointsToPrint = 400;
+                points += pointsToPrint;
+                document.getElementById("status").innerHTML = (frame5MonsterPrompt[toPrint]+ " You got: " +pointsToPrint+" Points!!");               
+            }
+          else if(monsterID.currentFrame == 5)
+            {
+                var toPrint = Math.floor(Math.random()*frame6MonsterPrompt.length);
+                var pointsToPrint = 500;
+                points += pointsToPrint;
+                document.getElementById("status").innerHTML = (frame6MonsterPrompt[toPrint]+ " You got: " +pointsToPrint+" Points!!!");               
+            }
+            
+        
+            console.log("Current Score: " +points);
+         
+        }
+        else if(playerTurns == 10)
+        {
+            EndGame();
+        }
+    }
+    
+//establishing the win messages based on score
+    function EndGame()
+    {
+        endGame = true;
+        for(var i=0; i<4; i++)
+            {
+                monsterSurfaces[i].clearRect(0,0, canvas.width, canvas.height);
+            }
+        if(points < 500)
+            {
+                document.getElementById("status").innerHTML = (" " +points+" Points??");
+            }
+        else if(points < 800)
+            {
+                document.getElementById("status").innerHTML = ("It can be better.. " +points+" Points.");
+            }
+        else if(points < 1000)
+            {
+                document.getElementById("status").innerHTML = ("Not bad. " +points+" Points!");
+            }
+        else if(points < 1500)
+            {
+                document.getElementById("status").innerHTML = ("GREAT RUN! " +points+" Points!!!");
+            }
+        else if(points < 5000)
+            {
+                document.getElementById("status").innerHTML = ("INSANE! " +points+" Points. WAY TO SHOW YOUR SKILLS!");
+            }
+        
+    }
+    
+</script>
+        
+    
